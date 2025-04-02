@@ -12,12 +12,15 @@ RUN apt-get install -y build-essential gdb lcov pkg-config \
 RUN apt-get install -y libusb-dev make git avr-libc gcc-avr gcc-arm-none-eabi \
     libusb-1.0-0-dev usbutils
 
-RUN adduser cw
-USER cw
+RUN adduser user
 
-WORKDIR /home/cw
+COPY --chown=user:user --chmod=0777 shell_env.sh /home/user/shell_env.sh
 
-ENV PYENV_ROOT /home/cw/.pyenv
+USER user
+
+WORKDIR /home/user
+
+ENV PYENV_ROOT /home/user/.pyenv
 RUN curl https://pyenv.run | bash
 ENV PATH $PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
 RUN echo 'export PATH="~/.pyenv/bin:$PATH"' >> ~/.bashrc && \
@@ -46,8 +49,9 @@ WORKDIR ./jupyter
 RUN eval "$(pyenv init -) && $(pyenv virtualenv-init -)" && pyenv activate cw && \
     nbstripout --install
 
-WORKDIR /home/cw/
+#WORKDIR /home/user/
 
-COPY --chown=cw:cw --chmod=0777 ["entrypoint.sh","/home/cw/entrypoint.sh"]
-
-ENTRYPOINT /home/cw/entrypoint.sh
+ENTRYPOINT /bin/bash -c "source ~/shell_env.sh; \
+                         cd /home/user/chipwhisperer/jupyter; \
+                         jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser \
+                         --NotebookApp.token='' --NotebookApp.password=''"

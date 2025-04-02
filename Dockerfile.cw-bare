@@ -12,12 +12,15 @@ RUN apt-get install -y build-essential gdb lcov pkg-config \
 RUN apt-get install -y libusb-dev make git avr-libc gcc-avr gcc-arm-none-eabi \
     libusb-1.0-0-dev usbutils
 
-RUN adduser cw
-USER cw
+RUN adduser user
 
-WORKDIR /home/cw
+COPY --chown=user:user --chmod=0744 shell_env.sh /home/user/shell_env.sh
 
-ENV PYENV_ROOT /home/cw/.pyenv
+USER user
+
+WORKDIR /home/user
+
+ENV PYENV_ROOT /home/user/.pyenv
 RUN curl https://pyenv.run | bash
 ENV PATH $PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
 RUN echo 'export PATH="~/.pyenv/bin:$PATH"' >> ~/.bashrc && \
@@ -36,9 +39,6 @@ RUN eval "$(pyenv init -) && $(pyenv virtualenv-init -)" && pyenv activate cw &&
     python -m pip install --upgrade pip && \
     python -m pip install -e .
 
-RUN mkdir -p /home/cw/work
-WORKDIR /home/cw/work
-
-COPY shell_env.sh /home/cw/shell_env.sh
+WORKDIR /home/user/work
 
 ENTRYPOINT /bin/bash --init-file ~/shell_env.sh
